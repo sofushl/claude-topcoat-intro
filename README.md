@@ -1,4 +1,4 @@
-# lightsUI
+# Claude Topcoat Intro
 
 A tour of [Topcoat](https://github.com/tokio-rs/topcoat) (0.10): one small working example per major feature.
 
