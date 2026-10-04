@@ -3,12 +3,12 @@ use topcoat::{
     context::{Cx, memoize},
     cookie::{Cookies, cookies},
     router::{
-        StatusCode,
+        Slot, StatusCode,
         error::NotFoundError,
         layout,
         request::uri,
     },
-    view::{class, component, view},
+    view::{View, class, component, error_boundary, view},
 };
 
 /// `#[memoize]`: computed once per request, however many components ask.
@@ -20,20 +20,10 @@ pub async fn theme(cx: &Cx) -> String {
     }
 }
 
-/// Wraps every page. `slot` is the page (or nested layout) already rendered.
+/// Wraps every page. `slot` is the page (or nested layout) being rendered.
 #[layout("/")]
-async fn root_layout(cx: &Cx, slot: Result) -> Result {
-    // A layout can catch a page's error and replace it with a branded page.
-    let content = match slot {
-        Err(e) if e.downcast_ref::<NotFoundError>().is_some() => view! {
-            (StatusCode::NOT_FOUND)
-            <h1>"Page not found"</h1>
-            <p><a href="/">"Back home"</a></p>
-        },
-        other => other,
-    }?;
-
-    view! {
+async fn root_layout(cx: &Cx, slot: Slot<'_>) -> Result<impl View> {
+    Ok(view! {
         <!DOCTYPE html>
         <html data-theme=(theme(cx).await)>
             <head>
@@ -53,19 +43,34 @@ async fn root_layout(cx: &Cx, slot: Result) -> Result {
                     nav_link(href: "/posts", label: "Routing")
                     nav_link(href: "/request", label: "Request & cookies")
                 </nav>
-                <main>(content)</main>
+                <main>
+                    // A layout can catch a page's error and replace it with a branded page.
+                    error_boundary(
+                        fallback: |error| {
+                            if error.downcast_ref::<NotFoundError>().is_none() {
+                                return Err(error);
+                            }
+                            Ok(view! {
+                                (StatusCode::NOT_FOUND)
+                                <h1>"Page not found"</h1>
+                                <p><a href="/">"Back home"</a></p>
+                            })
+                        },
+                        (slot)
+                    )
+                </main>
             </body>
         </html>
-    }
+    })
 }
 
 #[component]
-async fn nav_link(cx: &Cx, href: &str, label: &str) -> Result {
+async fn nav_link(cx: &Cx, href: &str, label: &str) -> Result<impl View> {
     let path = uri(cx).path();
     let current = if href == "/" { path == "/" } else { path.starts_with(href) };
-    view! {
+    Ok(view! {
         <a href=(href) class=(class!("active" if current)) aria-current=(current.then_some("page"))>
             (label)
         </a>
-    }
+    })
 }

@@ -19,6 +19,7 @@ use topcoat::{
     Result,
     asset::{AssetBundle, RouterBuilderAssetExt},
     cookie::RouterBuilderCookieExt,
+    runtime::RouterBuilderRuntimeExt,
     router::{Router, RouterBuilderDiscoverExt, content::Css, route},
 };
 
@@ -44,6 +45,8 @@ async fn main() {
             Todo { id: 1, title: "Read the Topcoat docs".into(), done: true },
             Todo { id: 2, title: "Build something".into(), done: false },
         ])))
+        // Enables page reruns; register application layers before this.
+        .runtime()
         .build();
 
     // Binds HOST:PORT, default 127.0.0.1:3000.

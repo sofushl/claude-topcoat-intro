@@ -1,11 +1,11 @@
 # lightsUI
 
-A tour of [Topcoat](https://github.com/tokio-rs/topcoat) (0.6): one small working example per major feature.
+A tour of [Topcoat](https://github.com/tokio-rs/topcoat) (0.10): one small working example per major feature.
 
 ## Run
 
 ```sh
-cargo install topcoat-cli --version 0.6.2 --locked   # needs rustc 1.95
+cargo install topcoat-cli --version 0.10.0 --locked  # needs rustc 1.98
 topcoat dev                                          # build, bundle assets, serve, live-reload
 # or, without live reload:
 topcoat asset bundle && cargo run

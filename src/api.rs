@@ -12,7 +12,7 @@ use topcoat::{
         response::Response,
         route,
     },
-    view::view,
+    view::{View, view},
 };
 
 use crate::Todos;
@@ -74,14 +74,14 @@ async fn set_theme(cx: &Cx, Form(form): Form<ThemeForm>) -> Result<SeeOther> {
 // ---------- request helpers + cookies on a page ----------
 
 #[page("/request")]
-async fn request(cx: &Cx) -> Result {
+async fn request(cx: &Cx) -> Result<impl View> {
     let theme = crate::layout::theme(cx).await;
     let user_agent = headers(cx)
         .get("user-agent")
         .and_then(|v| v.to_str().ok())
         .unwrap_or("unknown");
     let next = if theme == "dark" { "light" } else { "dark" };
-    view! {
+    Ok(view! {
         <h1>"Request & cookies"</h1>
         <section class="card">
             <h2>"Request helpers"</h2>
@@ -103,5 +103,5 @@ async fn request(cx: &Cx) -> Result {
             <p><a href="/api/health">"GET /api/health"</a>" (see the "<code>"x-elapsed-us"</code>" header added by a layer)"</p>
             <pre>"curl -X POST localhost:3000/api/echo -H 'content-type: application/json' -d '{\"message\":\"hi\"}'"</pre>
         </section>
-    }
+    })
 }

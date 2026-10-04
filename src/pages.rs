@@ -5,24 +5,24 @@ use topcoat::{
         error::RouterErrorExt,
         page, path_param, query_params,
     },
-    view::{View, attributes, class, component, view},
+    view::{Child, View, attributes, class, component, view},
 };
 
 // ---------- components: props, #[default], #[into], child content ----------
 
 #[component]
-async fn badge(#[into] label: String, #[default("info")] tone: &str) -> Result {
-    view! { <span class=(class!("badge", format!("badge-{tone}")))>(label)</span> }
+async fn badge(#[into] label: String, #[default("info")] tone: &str) -> Result<impl View> {
+    Ok(view! { <span class=(class!("badge", format!("badge-{tone}")))>(label)</span> })
 }
 
 #[component]
-async fn card(title: &str, child: View) -> Result {
-    view! {
+async fn card(title: &str, #[default] child: Child<'_>) -> Result<impl View> {
+    Ok(view! {
         <section class="card">
             <h2>(title)</h2>
             (child)
         </section>
-    }
+    })
 }
 
 enum Status {
@@ -33,7 +33,7 @@ enum Status {
 
 /// `/` : the `view!` macro, control flow, `class!`, `attributes!`.
 #[page("/")]
-async fn home() -> Result {
+async fn home() -> Result<impl View> {
     let fruits = ["apple", "banana", "cherry"];
     let statuses = [Status::Draft, Status::Published { title: "Hello" }, Status::Archived];
     let busy = true;
@@ -50,7 +50,7 @@ async fn home() -> Result {
         }
     };
 
-    view! {
+    Ok(view! {
         <h1>"Views"</h1>
         <p class="muted">"Everything on this page is rendered on the server by "<code>"view!"</code>"."</p>
 
@@ -97,7 +97,7 @@ async fn home() -> Result {
             </p>
             <(tag) data-dynamic-name="yes">"dynamic element name: <" (tag) ">"</(tag)>
         )
-    }
+    })
 }
 
 // ---------- routing: path params, query params, errors ----------
@@ -117,13 +117,13 @@ struct PostsQuery {
 }
 
 #[page("/posts")]
-async fn posts(cx: &Cx) -> Result {
+async fn posts(cx: &Cx) -> Result<impl View> {
     let q = query_params::<PostsQuery>(cx)?.q.clone().unwrap_or_default();
     let shown: Vec<_> = POSTS
         .iter()
         .filter(|(_, title, _)| title.to_lowercase().contains(&q.to_lowercase()))
         .collect();
-    view! {
+    Ok(view! {
         <h1>"Routing"</h1>
         <p class="muted">"Query params via "<code>"#[query_params]"</code>", path params via "<code>"path_param!"</code>"."</p>
         <form method="get" action="/posts">
@@ -136,16 +136,16 @@ async fn posts(cx: &Cx) -> Result {
             }
         </ul>
         <p><a href="/posts/999">"A missing post (404 caught by the layout)"</a></p>
-    }
+    })
 }
 
 #[page("/posts/{post_id}")]
-async fn post(cx: &Cx) -> Result {
+async fn post(cx: &Cx) -> Result<impl View> {
     let id = *path_param::<PostId>(cx)?;
     let (_, title, body) = POSTS.iter().find(|p| p.0 == id).ok_or_not_found()?;
-    view! {
+    Ok(view! {
         <h1>(*title)</h1>
         <p>(*body)</p>
         <p><a href="/posts">"All posts"</a></p>
-    }
+    })
 }
